@@ -1,489 +1,477 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desire Engine - Catch Your Hidden Wants</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .fade-in { 
-            animation: fadeIn 0.3s ease-out; 
-        }
-        .scale-in { 
-            animation: scaleIn 0.4s ease-out; 
-        }
-        .pulse-green { 
-            animation: pulseGreen 2s infinite; 
-        }
-        @keyframes fadeIn { 
-            from { opacity: 0; } 
-            to { opacity: 1; } 
-        }
-        @keyframes scaleIn { 
-            from { transform: scale(0.8); opacity: 0; } 
-            to { transform: scale(1); opacity: 1; } 
-        }
-        @keyframes pulseGreen { 
-            0%, 100% { opacity: 1; } 
-            50% { opacity: .5; } 
-        }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { Zap, Target, TrendingUp, Plus, Users, Lock, Flame, ArrowRight, Eye, Calendar, Sparkles } = lucide;
+import React, { useState, useEffect } from 'react';
+import { Zap, Target, TrendingUp, Plus, Users, Lock, Flame, ArrowRight, Eye, Calendar } from 'lucide-react';
 
-        const DesireEngine = () => {
-          // PURE LOCAL STATE - NO BACKEND, NO VERCEL, NO API CALLS
-          const [wishes, setWishes] = useState([]);
-          const [currentWish, setCurrentWish] = useState('');
-          const [selectedCategory, setSelectedCategory] = useState('career');
-          const [view, setView] = useState('home');
-          const [shareAnonymously, setShareAnonymously] = useState(true);
-          const [email, setEmail] = useState('');
-          const [showSuccessReward, setShowSuccessReward] = useState(false);
+const DesireEngine = () => {
+  const [wishes, setWishes] = useState([]);
+  const [currentWish, setCurrentWish] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('career');
+  const [view, setView] = useState('home');
+  const [shareAnonymously, setShareAnonymously] = useState(true);
+  const [email, setEmail] = useState('');
+  const [showSuccessReward, setShowSuccessReward] = useState(false);
 
-          const categories = [
-            { id: 'career', label: 'Career Power', icon: '⚡' },
-            { id: 'money', label: 'Financial Freedom', icon: '💰' },
-            { id: 'relationships', label: 'Connection', icon: '🔥' },
-            { id: 'lifestyle', label: 'Life Upgrade', icon: '✨' },
-            { id: 'creative', label: 'Creative Expression', icon: '🎯' },
-            { id: 'personal', label: 'Inner Revolution', icon: '🌊' }
-          ];
+  const categories = [
+    { id: 'career', label: 'Career Power', icon: '⚡' },
+    { id: 'money', label: 'Financial Freedom', icon: '💰' },
+    { id: 'relationships', label: 'Connection', icon: '🔥' },
+    { id: 'lifestyle', label: 'Life Upgrade', icon: '✨' },
+    { id: 'creative', label: 'Creative Expression', icon: '🎯' },
+    { id: 'personal', label: 'Inner Revolution', icon: '🌊' }
+  ];
 
-          const rawTruths = [
-            "Your unexpected desires are your future self sending signals",
-            "That sudden want isn't random. It's recognition.",
-            "Your wishes aren't embarrassing. They're data about who you're becoming.",
-            "The things that make you stop scrolling reveal what you actually want",
-            "Every desire is a compass pointing toward your unlived life"
-          ];
+  const rawTruths = [
+    "Your unexpected desires are your future self sending signals",
+    "That sudden want isn't random. It's recognition.",
+    "Your wishes aren't embarrassing. They're data about who you're becoming.",
+    "The things that make you stop scrolling reveal what you actually want"
+  ];
 
-          // Generate fake growing stats to make it feel alive (PURE LOCAL, NO SERVER)
-          const getMockStats = () => {
-            const daysSinceStart = Math.floor((new Date() - new Date('2024-12-01')) / (1000 * 60 * 60 * 24));
-            const hour = new Date().getHours();
-            
-            return {
-              totalGlobal: 1247 + daysSinceStart * 4 + Math.floor(hour / 2),
-              anonymousGlobal: 923 + daysSinceStart * 3 + hour,
-              todayGlobal: 12 + Math.floor(hour / 3) + Math.floor(Math.random() * 3)
-            };
-          };
+  useEffect(() => {
+    const saved = localStorage.getItem('desire-engine-wishes');
+    if (saved) {
+      try {
+        setWishes(JSON.parse(saved));
+      } catch (e) {
+        console.log('Error loading saved wishes');
+        setWishes([]);
+      }
+    }
+  }, []);
 
-          // LOAD FROM BROWSER STORAGE ONLY - NO EXTERNAL CALLS
-          useEffect(() => {
-            const saved = localStorage.getItem('desire-engine-wishes');
-            if (saved) {
-              try {
-                setWishes(JSON.parse(saved));
-              } catch (e) {
-                setWishes([]);
-              }
-            }
-          }, []);
+  const saveWish = () => {
+    if (!currentWish.trim()) return;
 
-          // SAVE TO BROWSER STORAGE ONLY - NO BACKEND, NO VERCEL
-          const saveWish = () => {
-            if (!currentWish.trim()) return;
+    const newWish = {
+      id: Date.now(),
+      text: currentWish,
+      category: selectedCategory,
+      timestamp: new Date().toISOString(),
+      anonymous: shareAnonymously,
+      email: shareAnonymously && email ? email : null,
+      intensity: Math.floor(Math.random() * 5) + 1
+    };
 
-            const newWish = {
-              id: Date.now(),
-              text: currentWish,
-              category: selectedCategory,
-              timestamp: new Date().toISOString(),
-              anonymous: shareAnonymously,
-              email: shareAnonymously && email ? email : null
-            };
+    const updatedWishes = [...wishes, newWish];
+    setWishes(updatedWishes);
+    localStorage.setItem('desire-engine-wishes', JSON.stringify(updatedWishes));
+    
+    setCurrentWish('');
+    setEmail('');
+    setShowSuccessReward(true);
+    
+    setTimeout(() => {
+      setShowSuccessReward(false);
+      setView('archive');
+    }, 3000);
+  };
 
-            // SAVE LOCALLY ONLY - NO EXTERNAL SERVICES
-            const updatedWishes = [...wishes, newWish];
-            setWishes(updatedWishes);
-            localStorage.setItem('desire-engine-wishes', JSON.stringify(updatedWishes));
-            
-            setCurrentWish('');
-            setEmail('');
-            setShowSuccessReward(true);
-            
-            setTimeout(() => {
-              setShowSuccessReward(false);
-              setView('archive');
-            }, 3000);
-          };
+  const getStats = () => {
+    const total = wishes.length;
+    const anonymous = wishes.filter(w => w.anonymous).length;
+    const withEmails = wishes.filter(w => w.anonymous && w.email).length;
+    const categories = {};
+    wishes.forEach(w => {
+      categories[w.category] = (categories[w.category] || 0) + 1;
+    });
+    return { total, anonymous, withEmails, categories };
+  };
 
-          const getStats = () => {
-            const mock = getMockStats();
-            const localStats = {
-              total: wishes.length,
-              anonymous: wishes.filter(w => w.anonymous).length,
-              withEmails: wishes.filter(w => w.email).length,
-              categories: {}
-            };
-            
-            wishes.forEach(w => {
-              localStats.categories[w.category] = (localStats.categories[w.category] || 0) + 1;
-            });
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric'
+      });
+    } catch (e) {
+      return 'Recent';
+    }
+  };
 
-            return {
-              total: Math.max(localStats.total, mock.totalGlobal),
-              anonymous: Math.max(localStats.anonymous, mock.anonymousGlobal),
-              withEmails: localStats.withEmails,
-              todayCount: mock.todayGlobal,
-              categories: localStats.categories
-            };
-          };
+  const DoodlePattern = () => (
+    <div className="absolute inset-0 overflow-hidden opacity-5 pointer-events-none">
+      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="doodles" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+            <path d="M20,20 Q40,10 60,20 T100,20" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <circle cx="150" cy="30" r="8" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <path d="M10,60 L30,80 L20,100 Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <path d="M120,70 Q140,50 160,70 Q180,90 200,70" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <rect x="70" y="120" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" transform="rotate(45 80 130)"/>
+            <path d="M40,150 C60,140 80,160 100,150" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <path d="M160,120 L180,140 M180,120 L160,140" stroke="currentColor" strokeWidth="2"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#doodles)"/>
+      </svg>
+    </div>
+  );
 
-          const formatDate = (dateString) => {
-            return new Date(dateString).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric'
-            });
-          };
+  const SuccessReward = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 transition-all duration-300">
+      <div className="bg-white rounded-3xl p-8 max-w-md mx-4 text-center transform transition-all duration-400 scale-100">
+        <Flame className="w-16 h-16 text-red-600 mx-auto mb-4" />
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Desire Captured</h3>
+        <p className="text-gray-600 mb-4">Your want is now part of the collective unconscious</p>
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+          <Users className="w-4 h-4" />
+          <span>{getStats().anonymous} anonymous wishes in the pool</span>
+        </div>
+      </div>
+    </div>
+  );
 
-          // SUCCESS POPUP - NO EXTERNAL CONNECTIONS
-          const SuccessReward = () => (
-            React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 fade-in" },
-              React.createElement('div', { className: "bg-white rounded-3xl p-8 max-w-md mx-4 text-center scale-in" },
-                React.createElement(Flame, { className: "w-16 h-16 text-red-600 mx-auto mb-4" }),
-                React.createElement('h3', { className: "text-2xl font-bold text-gray-900 mb-2" }, "Desire Captured"),
-                React.createElement('p', { className: "text-gray-600 mb-4" }, "Your want is safely stored in your personal vault"),
-                React.createElement('div', { className: "flex items-center justify-center gap-2 text-sm text-gray-500" },
-                  React.createElement(Users, { className: "w-4 h-4" }),
-                  React.createElement('span', {}, `${getStats().anonymous} desires ready for collective`)
-                )
-              )
-            )
-          );
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-purple-900 text-white relative">
+      <DoodlePattern />
+      
+      {showSuccessReward && <SuccessReward />}
+      
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
+        {/* Home View */}
+        {view === 'home' && (
+          <div className="space-y-12">
+            {/* Header */}
+            <div className="text-center space-y-6">
+              <div className="inline-flex items-center gap-3 mb-4">
+                <Zap className="w-8 h-8 text-yellow-400" />
+                <h1 className="text-6xl font-black tracking-tight">DESIRE ENGINE</h1>
+                <Zap className="w-8 h-8 text-yellow-400" />
+              </div>
+              <p className="text-xl text-red-200 max-w-2xl mx-auto leading-relaxed">
+                Catch those sudden moments when you realize you want something you never knew you wanted
+              </p>
+            </div>
 
-          return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-purple-900 text-white relative" },
-            showSuccessReward && React.createElement(SuccessReward),
-            
-            React.createElement('div', { className: "relative z-10 max-w-6xl mx-auto px-6 py-8" },
-              
-              // HOME VIEW
-              view === 'home' && React.createElement('div', { className: "space-y-12" },
-                // Header
-                React.createElement('div', { className: "text-center space-y-6" },
-                  React.createElement('div', { className: "inline-flex items-center gap-3 mb-4" },
-                    React.createElement(Zap, { className: "w-8 h-8 text-yellow-400" }),
-                    React.createElement('h1', { className: "text-6xl font-black tracking-tight" }, "DESIRE ENGINE"),
-                    React.createElement(Zap, { className: "w-8 h-8 text-yellow-400" })
-                  ),
-                  React.createElement('p', { className: "text-xl text-red-200 max-w-2xl mx-auto leading-relaxed" },
-                    "Catch those sudden moments when you realize you want something you never knew you wanted"
-                  ),
-                  React.createElement('div', { className: "flex items-center justify-center gap-2 text-sm" },
-                    React.createElement('div', { className: "w-2 h-2 rounded-full bg-green-400 pulse-green" }),
-                    React.createElement('span', { className: "text-green-300" },
-                      `${getStats().todayCount} desires captured today globally`
-                    )
-                  )
-                ),
+            {/* Explanation Section */}
+            <div className="grid md:grid-cols-2 gap-8 mt-16">
+              <div className="bg-black bg-opacity-20 backdrop-blur-sm border border-red-400 border-opacity-30 rounded-2xl p-8">
+                <Target className="w-12 h-12 text-red-400 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">Capture the Spark</h2>
+                <p className="text-red-100 leading-relaxed mb-4">
+                  You're scrolling, you see something, and suddenly you want it. Not because it was on your vision board, 
+                  but because something inside you just woke up and said "yes, that."
+                </p>
+                <p className="text-red-200 text-sm">
+                  Those moments reveal who you're becoming. This tool helps you catch them before they disappear.
+                </p>
+              </div>
 
-                // Explanation cards
-                React.createElement('div', { className: "grid md:grid-cols-2 gap-8 mt-16" },
-                  React.createElement('div', { className: "bg-black bg-opacity-20 backdrop-blur-sm border border-red-400 border-opacity-30 rounded-2xl p-8" },
-                    React.createElement(Target, { className: "w-12 h-12 text-red-400 mb-4" }),
-                    React.createElement('h2', { className: "text-2xl font-bold mb-4" }, "Capture the Spark"),
-                    React.createElement('p', { className: "text-red-100 leading-relaxed" },
-                      "You're scrolling, you see something, and suddenly you want it. Not because it was on your vision board, but because something inside you just woke up and said \"yes, that.\""
-                    )
-                  ),
-                  React.createElement('div', { className: "bg-black bg-opacity-20 backdrop-blur-sm border border-purple-400 border-opacity-30 rounded-2xl p-8" },
-                    React.createElement(Lock, { className: "w-12 h-12 text-purple-400 mb-4" }),
-                    React.createElement('h2', { className: "text-2xl font-bold mb-4" }, "100% Private"),
-                    React.createElement('p', { className: "text-red-100 leading-relaxed" },
-                      "Everything stays on your device. No servers, no tracking, no bullshit. Your desires are yours alone until you choose to share them."
-                    )
-                  )
-                ),
+              <div className="bg-black bg-opacity-20 backdrop-blur-sm border border-purple-400 border-opacity-30 rounded-2xl p-8">
+                <Lock className="w-12 h-12 text-purple-400 mb-4" />
+                <h2 className="text-2xl font-bold mb-4">Anonymous by Design</h2>
+                <p className="text-red-100 leading-relaxed mb-4">
+                  Your raw wants go into a collective pool. No names, no profiles, no judgment. 
+                  Just the shared experience of wanting more than what we have.
+                </p>
+                <p className="text-red-200 text-sm">
+                  Sometimes you'll see fragments of other people's desires. You'll never know who, they'll never know you.
+                </p>
+              </div>
+            </div>
 
-                // Stats display
-                getStats().total > 0 && React.createElement('div', { className: "grid grid-cols-3 gap-4 mt-12" },
-                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-red-400 border-opacity-20" },
-                    React.createElement('div', { className: "text-3xl font-black text-red-400" }, getStats().total),
-                    React.createElement('div', { className: "text-sm text-red-200" }, "Total Desires")
-                  ),
-                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-purple-400 border-opacity-20" },
-                    React.createElement('div', { className: "text-3xl font-black text-purple-400" }, getStats().anonymous),
-                    React.createElement('div', { className: "text-sm text-purple-200" }, "Ready for Future Collective")
-                  ),
-                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-yellow-400 border-opacity-20" },
-                    React.createElement('div', { className: "text-3xl font-black text-yellow-400" },
-                      Object.keys(getStats().categories).length
-                    ),
-                    React.createElement('div', { className: "text-sm text-yellow-200" }, "Life Areas")
-                  )
-                ),
+            {/* Stats */}
+            {wishes.length > 0 && (
+              <div className="grid grid-cols-3 gap-4 mt-12">
+                <div className="text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-red-400 border-opacity-20">
+                  <div className="text-3xl font-black text-red-400">{getStats().total}</div>
+                  <div className="text-sm text-red-200">Desires Catalogued</div>
+                </div>
+                <div className="text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-purple-400 border-opacity-20">
+                  <div className="text-3xl font-black text-purple-400">{getStats().anonymous}</div>
+                  <div className="text-sm text-purple-200">In Collective Pool</div>
+                </div>
+                <div className="text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-yellow-400 border-opacity-20">
+                  <div className="text-3xl font-black text-yellow-400">
+                    {Object.keys(getStats().categories).length}
+                  </div>
+                  <div className="text-sm text-yellow-200">Life Areas</div>
+                </div>
+              </div>
+            )}
 
-                // Action buttons
-                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 justify-center mt-16" },
-                  React.createElement('button', {
-                    onClick: () => setView('add'),
-                    className: "bg-red-600 hover:bg-red-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all transform hover:scale-105 justify-center"
-                  },
-                    React.createElement(Plus, { className: "w-6 h-6" }),
-                    "Capture a Desire"
-                  ),
-                  getStats().total > 0 && React.createElement(React.Fragment, {},
-                    React.createElement('button', {
-                      onClick: () => setView('archive'),
-                      className: "bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all justify-center"
-                    },
-                      React.createElement(Calendar, { className: "w-6 h-6" }),
-                      `View Archive (${wishes.length})`
-                    ),
-                    React.createElement('button', {
-                      onClick: () => setView('insights'),
-                      className: "bg-yellow-600 hover:bg-yellow-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all justify-center"
-                    },
-                      React.createElement(TrendingUp, { className: "w-6 h-6" }),
-                      "Pattern Analysis"
-                    )
-                  )
-                ),
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-16">
+              <button
+                onClick={() => setView('add')}
+                className="bg-red-600 hover:bg-red-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all transform hover:scale-105"
+              >
+                <Plus className="w-6 h-6" />
+                Capture a Desire
+              </button>
+              {wishes.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setView('archive')}
+                    className="bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all"
+                  >
+                    <Calendar className="w-6 h-6" />
+                    View Archive ({wishes.length})
+                  </button>
+                  <button
+                    onClick={() => setView('insights')}
+                    className="bg-yellow-600 hover:bg-yellow-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all"
+                  >
+                    <TrendingUp className="w-6 h-6" />
+                    Pattern Analysis
+                  </button>
+                </>
+              )}
+            </div>
 
-                // Quote
-                React.createElement('div', { className: "text-center mt-16 p-8 border-2 border-red-400 border-opacity-30 rounded-2xl bg-black bg-opacity-10" },
-                  React.createElement('p', { className: "text-lg font-medium text-red-200" },
-                    `"${rawTruths[Math.floor(Math.random() * rawTruths.length)]}"`
-                  )
-                )
-              ),
+            {/* Raw Truth */}
+            <div className="text-center mt-16 p-8 border-2 border-red-400 border-opacity-30 rounded-2xl bg-black bg-opacity-10">
+              <p className="text-lg font-medium text-red-200">
+                "{rawTruths[Math.floor(Math.random() * rawTruths.length)]}"
+              </p>
+            </div>
+          </div>
+        )}
 
-              // ADD WISH VIEW
-              view === 'add' && React.createElement('div', { className: "max-w-2xl mx-auto space-y-8" },
-                React.createElement('div', { className: "text-center" },
-                  React.createElement('button', {
-                    onClick: () => setView('home'),
-                    className: "text-red-300 hover:text-white mb-6 flex items-center gap-2 mx-auto transition-colors"
-                  }, "← Back to Home"),
-                  React.createElement('h2', { className: "text-4xl font-black mb-4" }, "What Just Woke Up Inside You?"),
-                  React.createElement('p', { className: "text-red-200 text-lg" },
-                    "That moment when something sparked and you thought \"I want that\" for the first time"
-                  )
-                ),
+        {/* Add Wish View */}
+        {view === 'add' && (
+          <div className="max-w-2xl mx-auto space-y-8">
+            <div className="text-center">
+              <button 
+                onClick={() => setView('home')}
+                className="text-red-300 hover:text-white mb-6 flex items-center gap-2 mx-auto transition-colors"
+              >
+                ← Back to Home
+              </button>
+              <h2 className="text-4xl font-black mb-4">What Just Woke Up Inside You?</h2>
+              <p className="text-red-200 text-lg">
+                That moment when something sparked and you thought "I want that" for the first time
+              </p>
+            </div>
 
-                React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-3xl p-8 border border-red-400 border-opacity-20" },
-                  // Categories
-                  React.createElement('div', { className: "mb-8" },
-                    React.createElement('label', { className: "block text-red-200 font-bold mb-4" }, "Pick your poison:"),
-                    React.createElement('div', { className: "grid grid-cols-2 md:grid-cols-3 gap-3" },
-                      categories.map((cat) => 
-                        React.createElement('button', {
-                          key: cat.id,
-                          onClick: () => setSelectedCategory(cat.id),
-                          className: `p-4 rounded-xl text-left transition-all border-2 ${
-                            selectedCategory === cat.id 
-                              ? 'bg-red-600 border-red-400' 
-                              : 'bg-black bg-opacity-20 border-red-700 border-opacity-30 hover:border-red-500 hover:border-opacity-50'
-                          }`
-                        },
-                          React.createElement('div', { className: "text-2xl mb-2" }, cat.icon),
-                          React.createElement('div', { className: "text-sm font-bold" }, cat.label)
-                        )
-                      )
-                    )
-                  ),
+            <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-3xl p-8 border border-red-400 border-opacity-20">
+              {/* Category Selection */}
+              <div className="mb-8">
+                <label className="block text-red-200 font-bold mb-4">Pick your poison:</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`p-4 rounded-xl text-left transition-all border-2 ${
+                        selectedCategory === cat.id 
+                          ? 'bg-red-600 border-red-400' 
+                          : 'bg-black bg-opacity-20 border-red-700 border-opacity-30 hover:border-red-500 hover:border-opacity-50'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">{cat.icon}</div>
+                      <div className="text-sm font-bold">{cat.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  // Text input
-                  React.createElement('div', { className: "mb-6" },
-                    React.createElement('textarea', {
-                      value: currentWish,
-                      onChange: (e) => setCurrentWish(e.target.value),
-                      placeholder: "I wish...",
-                      className: "w-full p-6 rounded-2xl border-2 border-red-600 border-opacity-30 focus:border-red-400 focus:outline-none resize-none text-white placeholder-red-300 bg-black bg-opacity-40 text-lg",
-                      rows: "4"
-                    })
-                  ),
+              {/* Wish Input */}
+              <div className="mb-6">
+                <textarea
+                  value={currentWish}
+                  onChange={(e) => setCurrentWish(e.target.value)}
+                  placeholder="I wish..."
+                  className="w-full p-6 rounded-2xl border-2 border-red-600 border-opacity-30 focus:border-red-400 focus:outline-none resize-none text-white placeholder-red-300 bg-black bg-opacity-40 text-lg"
+                  rows="4"
+                />
+              </div>
 
-                  // Anonymous toggle
-                  React.createElement('div', { className: "mb-6 space-y-4" },
-                    React.createElement('div', { className: "flex items-center justify-between p-4 bg-black bg-opacity-20 rounded-xl border border-purple-600 border-opacity-30" },
-                      React.createElement('div', {},
-                        React.createElement('div', { className: "font-bold text-purple-200 flex items-center gap-2" },
-                          React.createElement(Users, { className: "w-5 h-5" }),
-                          "Mark for Future Collective"
-                        ),
-                        React.createElement('div', { className: "text-sm text-purple-300" },
-                          "Stored locally, ready to share when collective connects"
-                        )
-                      ),
-                      React.createElement('button', {
-                        onClick: () => setShareAnonymously(!shareAnonymously),
-                        className: `w-12 h-6 rounded-full transition-all relative ${
-                          shareAnonymously ? 'bg-purple-500' : 'bg-gray-600'
-                        }`
-                      },
-                        React.createElement('div', { className: `w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
-                          shareAnonymously ? 'translate-x-6' : 'translate-x-0.5'
-                        }`})
-                      )
-                    ),
+              {/* Anonymous Toggle & Email */}
+              <div className="mb-6 space-y-4">
+                <div className="flex items-center justify-between p-4 bg-black bg-opacity-20 rounded-xl border border-purple-600 border-opacity-30">
+                  <div>
+                    <div className="font-bold text-purple-200 flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Add to Anonymous Collective
+                    </div>
+                    <div className="text-sm text-purple-300">
+                      Your desire joins {getStats().anonymous} others in the void
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShareAnonymously(!shareAnonymously)}
+                    className={`w-12 h-6 rounded-full transition-all relative ${
+                      shareAnonymously ? 'bg-purple-500' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      shareAnonymously ? 'translate-x-6' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
 
-                    shareAnonymously && React.createElement('div', { className: "bg-purple-900 bg-opacity-20 border border-purple-600 border-opacity-30 rounded-xl p-4 space-y-3" },
-                      React.createElement('div', { className: "flex items-center gap-2 text-purple-200 font-medium" },
-                        React.createElement(Eye, { className: "w-4 h-4" }),
-                        "Future Anonymous Signals"
-                      ),
-                      React.createElement('input', {
-                        type: "email",
-                        value: email,
-                        onChange: (e) => setEmail(e.target.value),
-                        placeholder: "your.email@example.com (optional)",
-                        className: "w-full p-3 rounded-xl bg-black bg-opacity-40 border border-purple-600 border-opacity-50 text-white placeholder-purple-300 focus:border-purple-400 focus:outline-none"
-                      }),
-                      React.createElement('div', { className: "bg-purple-950 bg-opacity-50 rounded-lg p-3 border-l-4 border-purple-500" },
-                        React.createElement('p', { className: "text-purple-200 text-sm leading-relaxed" },
-                          React.createElement('strong', {}, "Stored locally only: "),
-                          "When the collective eventually connects, you'll get anonymous signals from shared desires. No servers involved right now."
-                        )
-                      )
-                    )
-                  ),
+                {/* Email for Anonymous Notifications */}
+                {shareAnonymously && (
+                  <div className="bg-purple-900 bg-opacity-20 border border-purple-600 border-opacity-30 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-purple-200 font-medium">
+                      <Eye className="w-4 h-4" />
+                      Get Anonymous Signals (Optional)
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      className="w-full p-3 rounded-xl bg-black bg-opacity-40 border border-purple-600 border-opacity-50 text-white placeholder-purple-300 focus:border-purple-400 focus:outline-none"
+                    />
+                    <div className="bg-purple-950 bg-opacity-50 rounded-lg p-3 border-l-4 border-purple-500">
+                      <p className="text-purple-200 text-sm leading-relaxed">
+                        <strong>You'll be seen without being seen:</strong> Get gentle reminders when the collective 
+                        shifts. Anonymous fragments like "someone else wished for creative freedom today" or 
+                        "the pool is buzzing with career desires." No names, no details, just the pulse of 
+                        shared wanting. You can stop anytime.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                  React.createElement('button', {
-                    onClick: saveWish,
-                    disabled: !currentWish.trim(),
-                    className: "w-full bg-gradient-to-r from-red-600 to-purple-600 text-white py-6 px-6 rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-red-500 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center justify-center gap-3"
-                  },
-                    React.createElement(Flame, { className: "w-6 h-6" }),
-                    "CAPTURE THIS DESIRE",
-                    React.createElement(ArrowRight, { className: "w-6 h-6" })
-                  )
-                )
-              ),
+              <button
+                onClick={saveWish}
+                disabled={!currentWish.trim()}
+                className="w-full bg-gradient-to-r from-red-600 to-purple-600 text-white py-6 px-6 rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-red-500 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+              >
+                <Flame className="w-6 h-6" />
+                CAPTURE THIS DESIRE
+                <ArrowRight className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        )}
 
-              // ARCHIVE VIEW
-              view === 'archive' && React.createElement('div', { className: "space-y-6" },
-                React.createElement('div', { className: "flex items-center justify-between" },
-                  React.createElement('button', {
-                    onClick: () => setView('home'),
-                    className: "text-red-300 hover:text-white flex items-center gap-2 transition-colors"
-                  }, "← Back to Home"),
-                  React.createElement('h2', { className: "text-3xl font-black" }, "Your Desire Archive"),
-                  React.createElement('div', { className: "text-red-300 text-sm" }, `${wishes.length} entries`)
-                ),
+        {/* Archive View */}
+        {view === 'archive' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => setView('home')}
+                className="text-red-300 hover:text-white flex items-center gap-2 transition-colors"
+              >
+                ← Back to Home
+              </button>
+              <h2 className="text-3xl font-black">Your Desire Archive</h2>
+              <div className="text-red-300 text-sm">{wishes.length} entries</div>
+            </div>
 
-                wishes.length === 0 ? 
-                  React.createElement('div', { className: "text-center py-12" },
-                    React.createElement(Flame, { className: "w-16 h-16 text-red-400 opacity-50 mx-auto mb-4" }),
-                    React.createElement('p', { className: "text-red-300 text-lg" }, "No desires captured yet")
-                  ) :
-                  React.createElement('div', { className: "space-y-4" },
-                    wishes.slice().reverse().map((wish) => {
-                      const category = categories.find(c => c.id === wish.category);
-                      return React.createElement('div', { 
-                        key: wish.id, 
-                        className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20" 
-                      },
-                        React.createElement('div', { className: "flex items-start gap-4" },
-                          React.createElement('div', { className: "text-3xl" }, category?.icon),
-                          React.createElement('div', { className: "flex-1" },
-                            React.createElement('div', { className: "flex items-center gap-3 mb-3 flex-wrap" },
-                              React.createElement('span', { className: "text-sm font-bold text-red-300 bg-red-900 bg-opacity-50 px-3 py-1 rounded-full" },
-                                category?.label
-                              ),
-                              React.createElement('span', { className: "text-xs text-red-400" },
-                                formatDate(wish.timestamp)
-                              ),
-                              wish.anonymous && React.createElement('span', { className: "text-xs text-purple-300 bg-purple-900 bg-opacity-50 px-2 py-1 rounded-full flex items-center gap-1" },
-                                React.createElement(Eye, { className: "w-3 h-3" }),
-                                "marked for collective"
-                              )
-                            ),
-                            React.createElement('p', { className: "text-red-100 leading-relaxed text-lg" }, wish.text)
-                          )
-                        )
-                      );
-                    })
-                  )
-              ),
+            <div className="space-y-4">
+              {wishes.length === 0 ? (
+                <div className="text-center py-12">
+                  <Flame className="w-16 h-16 text-red-400 opacity-50 mx-auto mb-4" />
+                  <p className="text-red-300 text-lg">No desires captured yet</p>
+                </div>
+              ) : (
+                wishes.slice().reverse().map((wish) => {
+                  const category = categories.find(c => c.id === wish.category);
+                  return (
+                    <div key={wish.id} className="bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20">
+                      <div className="flex items-start gap-4">
+                        <div className="text-3xl">{category?.icon}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3 flex-wrap">
+                            <span className="text-sm font-bold text-red-300 bg-red-900 bg-opacity-50 px-3 py-1 rounded-full">
+                              {category?.label}
+                            </span>
+                            <span className="text-xs text-red-400">
+                              {formatDate(wish.timestamp)}
+                            </span>
+                            {wish.anonymous && (
+                              <span className="text-xs text-purple-300 bg-purple-900 bg-opacity-50 px-2 py-1 rounded-full flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                anonymous
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-red-100 leading-relaxed text-lg">{wish.text}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
 
-              // INSIGHTS VIEW
-              view === 'insights' && React.createElement('div', { className: "space-y-8" },
-                React.createElement('div', { className: "flex items-center justify-between" },
-                  React.createElement('button', {
-                    onClick: () => setView('home'),
-                    className: "text-red-300 hover:text-white flex items-center gap-2 transition-colors"
-                  }, "← Back to Home"),
-                  React.createElement('h2', { className: "text-3xl font-black" }, "Pattern Recognition")
-                ),
+        {/* Insights View */}
+        {view === 'insights' && (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <button 
+                onClick={() => setView('home')}
+                className="text-red-300 hover:text-white flex items-center gap-2 transition-colors"
+              >
+                ← Back to Home
+              </button>
+              <h2 className="text-3xl font-black">Pattern Recognition</h2>
+              <div></div>
+            </div>
 
-                React.createElement('div', { className: "grid md:grid-cols-2 gap-6" },
-                  React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20" },
-                    React.createElement('h3', { className: "text-xl font-bold mb-6" }, "Where Your Desires Live"),
-                    React.createElement('div', { className: "space-y-4" },
-                      categories.map((cat) => {
-                        const count = getStats().categories[cat.id] || 0;
-                        const totalWishes = Object.values(getStats().categories).reduce((a, b) => a + b, 0);
-                        const percentage = totalWishes > 0 ? (count / totalWishes * 100) : 0;
-                        return React.createElement('div', { key: cat.id, className: "space-y-2" },
-                          React.createElement('div', { className: "flex items-center justify-between" },
-                            React.createElement('div', { className: "flex items-center gap-3" },
-                              React.createElement('span', { className: "text-xl" }, cat.icon),
-                              React.createElement('span', { className: "font-medium" }, cat.label)
-                            ),
-                            React.createElement('span', { className: "text-sm text-red-300" }, count)
-                          ),
-                          React.createElement('div', { className: "h-2 bg-red-900 bg-opacity-50 rounded-full overflow-hidden" },
-                            React.createElement('div', {
-                              className: "h-full bg-gradient-to-r from-red-500 to-purple-500 rounded-full transition-all duration-1000",
-                              style: { width: `${percentage}%` }
-                            })
-                          )
-                        );
-                      })
-                    )
-                  ),
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Category Breakdown */}
+              <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20">
+                <h3 className="text-xl font-bold mb-6">Where Your Desires Live</h3>
+                <div className="space-y-4">
+                  {categories.map((cat) => {
+                    const count = getStats().categories[cat.id] || 0;
+                    const percentage = wishes.length > 0 ? (count / wishes.length * 100) : 0;
+                    return (
+                      <div key={cat.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{cat.icon}</span>
+                            <span className="font-medium">{cat.label}</span>
+                          </div>
+                          <span className="text-sm text-red-300">{count}</span>
+                        </div>
+                        <div className="h-2 bg-red-900 bg-opacity-50 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-red-500 to-purple-500 rounded-full transition-all duration-1000"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-purple-700 border-opacity-20" },
-                    React.createElement('h3', { className: "text-xl font-bold mb-6" }, "Your Numbers"),
-                    React.createElement('div', { className: "space-y-6" },
-                      React.createElement('div', { className: "text-center p-4 bg-red-900 bg-opacity-30 rounded-xl" },
-                        React.createElement('div', { className: "text-3xl font-black text-red-400 mb-1" }, wishes.length),
-                        React.createElement('div', { className: "text-sm text-red-200" }, "Desires Captured")
-                      ),
-                      
-                      React.createElement('div', { className: "text-center p-4 bg-purple-900 bg-opacity-30 rounded-xl" },
-                        React.createElement('div', { className: "text-3xl font-black text-purple-400 mb-1" }, getStats().anonymous),
-                        React.createElement('div', { className: "text-sm text-purple-200" }, "Marked for Future Collective"),
-                        React.createElement('div', { className: "text-xs text-purple-300 mt-1" },
-                          `${wishes.length > 0 ? Math.round((getStats().anonymous / wishes.length) * 100) : 0}% of your desires`
-                        )
-                      ),
+              {/* Meta Stats */}
+              <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-purple-700 border-opacity-20">
+                <h3 className="text-xl font-bold mb-6">The Numbers</h3>
+                <div className="space-y-6">
+                  <div className="text-center p-4 bg-red-900 bg-opacity-30 rounded-xl">
+                    <div className="text-3xl font-black text-red-400 mb-1">{getStats().total}</div>
+                    <div className="text-sm text-red-200">Total Desires Captured</div>
+                  </div>
+                  
+                  <div className="text-center p-4 bg-purple-900 bg-opacity-30 rounded-xl">
+                    <div className="text-3xl font-black text-purple-400 mb-1">{getStats().anonymous}</div>
+                    <div className="text-sm text-purple-200">In Anonymous Pool</div>
+                    <div className="text-xs text-purple-300 mt-1">
+                      {getStats().total > 0 ? Math.round((getStats().anonymous / getStats().total) * 100) : 0}% shared anonymously
+                    </div>
+                  </div>
 
-                      React.createElement('div', { className: "p-4 bg-yellow-900 bg-opacity-20 rounded-xl border border-yellow-600 border-opacity-30" },
-                        React.createElement('p', { className: "text-sm text-yellow-200 font-medium" },
-                          "Your desires are showing you who you want to become. Pay attention to the patterns."
-                        )
-                      ),
+                  {getStats().withEmails > 0 && (
+                    <div className="text-center p-4 bg-yellow-900 bg-opacity-30 rounded-xl">
+                      <div className="text-3xl font-black text-yellow-400 mb-1">{getStats().withEmails}</div>
+                      <div className="text-sm text-yellow-200">Getting Anonymous Signals</div>
+                    </div>
+                  )}
 
-                      React.createElement('div', { className: "p-4 bg-green-900 bg-opacity-20 rounded-xl border border-green-600 border-opacity-30" },
-                        React.createElement('p', { className: "text-sm text-green-200 font-medium" },
-                          "🔒 Everything stored locally on your device. No servers, no tracking, no external connections."
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          );
-        };
+                  <div className="p-4 bg-yellow-900 bg-opacity-20 rounded-xl border border-yellow-600 border-opacity-30">
+                    <p className="text-sm text-yellow-200 font-medium">
+                      Your desires are showing you who you want to become. Pay attention to the patterns.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-        ReactDOM.render(React.createElement(DesireEngine), document.getElementById('root'));
-    </script>
-</body>
-</html>
+export default DesireEngine;
