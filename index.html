@@ -344,6 +344,7 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            cursor: pointer;
         }
 
         .success-modal {
@@ -355,6 +356,7 @@
             margin: 1rem;
             text-align: center;
             animation: scaleIn 0.4s ease-out;
+            cursor: default;
         }
 
         @keyframes scaleIn {
@@ -372,6 +374,22 @@
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
+        }
+
+        .success-btn {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .success-btn:hover {
+            background: #ef4444;
         }
 
         .wish-item {
@@ -413,6 +431,31 @@
             color: #fca5a5;
             font-size: 1.125rem;
             line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .form-title {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -552,12 +595,15 @@
             <div id="wishes-list"></div>
         </div>
 
-        <!-- SUCCESS MODAL -->
-        <div id="success-modal" class="success-overlay hidden">
-            <div class="success-modal">
+        <!-- SUCCESS MODAL - FIXED VERSION -->
+        <div id="success-modal" class="success-overlay hidden" onclick="closeSuccessModal()">
+            <div class="success-modal" onclick="event.stopPropagation()">
                 <div class="success-icon">🔥</div>
                 <h3 class="success-title">Desire Captured</h3>
                 <p>Your want is safely stored in your personal vault</p>
+                <button class="success-btn" onclick="closeSuccessModal()">
+                    Continue to Archive
+                </button>
             </div>
         </div>
     </div>
@@ -619,6 +665,12 @@
                 document.getElementById('categories-count').textContent = categoriesCount;
                 document.getElementById('archive-count').textContent = totalCount;
             }
+        }
+
+        // Close success modal
+        function closeSuccessModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+            showArchiveView();
         }
 
         // Show different views
@@ -701,11 +753,10 @@
             // Show success modal
             document.getElementById('success-modal').classList.remove('hidden');
             
-            // Auto-hide modal and go to archive
+            // Auto-hide modal after 4 seconds (longer time)
             setTimeout(() => {
-                document.getElementById('success-modal').classList.add('hidden');
-                showArchiveView();
-            }, 2000);
+                closeSuccessModal();
+            }, 4000);
         }
 
         // Display wishes in archive
@@ -747,6 +798,13 @@
                 `;
             }).join('');
         }
+
+        // Handle escape key to close modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeSuccessModal();
+            }
+        });
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
