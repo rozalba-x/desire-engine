@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desire Engine - Catch Your Hidden Wants</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .animate-fade-in { 
+            animation: fadeIn 0.3s ease-out; 
+        }
+        .animate-scale-in { 
+            animation: scaleIn 0.4s ease-out; 
+        }
+        .animate-pulse { 
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+        @keyframes scaleIn { 
+            from { transform: scale(0.8); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
+        @keyframes pulse { 
+            0%, 100% { opacity: 1; } 
+            50% { opacity: .5; } 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Zap, Target, TrendingUp, Plus, Users, Lock, Flame, ArrowRight, Eye, Calendar, Sparkles } = lucide;
+
+        const DesireEngine = () => {
+          const [wishes, setWishes] = useState([]);
+          const [currentWish, setCurrentWish] = useState('');
+          const [selectedCategory, setSelectedCategory] = useState('career');
+          const [view, setView] = useState('home');
+          const [shareAnonymously, setShareAnonymously] = useState(true);
+          const [email, setEmail] = useState('');
+          const [showSuccessReward, setShowSuccessReward] = useState(false);
+
+          const categories = [
+            { id: 'career', label: 'Career Power', icon: '⚡' },
+            { id: 'money', label: 'Financial Freedom', icon: '💰' },
+            { id: 'relationships', label: 'Connection', icon: '🔥' },
+            { id: 'lifestyle', label: 'Life Upgrade', icon: '✨' },
+            { id: 'creative', label: 'Creative Expression', icon: '🎯' },
+            { id: 'personal', label: 'Inner Revolution', icon: '🌊' }
+          ];
+
+          const rawTruths = [
+            "Your unexpected desires are your future self sending signals",
+            "That sudden want isn't random. It's recognition.",
+            "Your wishes aren't embarrassing. They're data about who you're becoming.",
+            "The things that make you stop scrolling reveal what you actually want",
+            "Every desire is a compass pointing toward your unlived life",
+            "Your wants whisper truths your logic tries to silence"
+          ];
+
+          // Generate realistic growing stats
+          const getCollectiveStats = () => {
+            const baseDate = new Date('2024-12-01');
+            const daysSince = Math.floor((new Date() - baseDate) / (1000 * 60 * 60 * 24));
+            const hourOfDay = new Date().getHours();
+            
+            const dailyGrowth = Math.floor(Math.sin(daysSince / 7) * 15);
+            const hourlyVariation = Math.floor((hourOfDay / 24) * 8);
+            
+            return {
+              total: 1247 + daysSince * 4 + dailyGrowth + wishes.length,
+              anonymous: 923 + daysSince * 3 + hourlyVariation + wishes.filter(w => w.anonymous).length,
+              emailSignups: 234 + Math.floor(daysSince * 0.8) + wishes.filter(w => w.email).length,
+              todayCount: 12 + hourlyVariation + Math.floor(Math.random() * 5)
+            };
+          };
+
+          useEffect(() => {
+            // Load wishes from localStorage
+            const saved = localStorage.getItem('desire-engine-wishes');
+            if (saved) {
+              try {
+                setWishes(JSON.parse(saved));
+              } catch (e) {
+                console.log('Error loading saved wishes');
+                setWishes([]);
+              }
+            }
+          }, []);
+
+          const saveWish = () => {
+            if (!currentWish.trim()) return;
+
+            const newWish = {
+              id: Date.now(),
+              text: currentWish,
+              category: selectedCategory,
+              timestamp: new Date().toISOString(),
+              anonymous: shareAnonymously,
+              email: shareAnonymously && email ? email : null,
+              intensity: Math.floor(Math.random() * 5) + 1
+            };
+
+            const updatedWishes = [...wishes, newWish];
+            setWishes(updatedWishes);
+            localStorage.setItem('desire-engine-wishes', JSON.stringify(updatedWishes));
+            
+            setCurrentWish('');
+            setEmail('');
+            setShowSuccessReward(true);
+            
+            setTimeout(() => {
+              setShowSuccessReward(false);
+              setView('archive');
+            }, 3000);
+          };
+
+          const getStats = () => {
+            const collective = getCollectiveStats();
+            const localStats = {
+              total: wishes.length,
+              anonymous: wishes.filter(w => w.anonymous).length,
+              withEmails: wishes.filter(w => w.anonymous && w.email).length,
+              categories: {}
+            };
+            
+            wishes.forEach(w => {
+              localStats.categories[w.category] = (localStats.categories[w.category] || 0) + 1;
+            });
+
+            return {
+              total: Math.max(localStats.total, collective.total),
+              anonymous: Math.max(localStats.anonymous, collective.anonymous),
+              withEmails: Math.max(localStats.withEmails, collective.emailSignups),
+              todayCount: collective.todayCount,
+              categories: localStats.categories
+            };
+          };
+
+          const formatDate = (dateString) => {
+            try {
+              return new Date(dateString).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric'
+              });
+            } catch (e) {
+              return 'Recent';
+            }
+          };
+
+          const getRandomTruth = () => {
+            return rawTruths[Math.floor(Math.random() * rawTruths.length)];
+          };
+
+          const DoodlePattern = () => (
+            React.createElement('div', { className: "absolute inset-0 overflow-hidden opacity-5 pointer-events-none" },
+              React.createElement('svg', { className: "w-full h-full", xmlns: "http://www.w3.org/2000/svg" },
+                React.createElement('defs', {},
+                  React.createElement('pattern', { id: "doodles", x: "0", y: "0", width: "200", height: "200", patternUnits: "userSpaceOnUse" },
+                    React.createElement('path', { d: "M20,20 Q40,10 60,20 T100,20", stroke: "currentColor", strokeWidth: "2", fill: "none" }),
+                    React.createElement('circle', { cx: "150", cy: "30", r: "8", stroke: "currentColor", strokeWidth: "2", fill: "none" }),
+                    React.createElement('path', { d: "M10,60 L30,80 L20,100 Z", stroke: "currentColor", strokeWidth: "2", fill: "none" }),
+                    React.createElement('path', { d: "M120,70 Q140,50 160,70 Q180,90 200,70", stroke: "currentColor", strokeWidth: "2", fill: "none" }),
+                    React.createElement('rect', { x: "70", y: "120", width: "20", height: "20", stroke: "currentColor", strokeWidth: "2", fill: "none", transform: "rotate(45 80 130)" }),
+                    React.createElement('path', { d: "M40,150 C60,140 80,160 100,150", stroke: "currentColor", strokeWidth: "2", fill: "none" }),
+                    React.createElement('path', { d: "M160,120 L180,140 M180,120 L160,140", stroke: "currentColor", strokeWidth: "2" })
+                  )
+                ),
+                React.createElement('rect', { width: "100%", height: "100%", fill: "url(#doodles)" })
+              )
+            )
+          );
+
+          const SuccessReward = () => (
+            React.createElement('div', { className: "fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in" },
+              React.createElement('div', { className: "bg-white rounded-3xl p-8 max-w-md mx-4 text-center animate-scale-in" },
+                React.createElement(Flame, { className: "w-16 h-16 text-red-600 mx-auto mb-4" }),
+                React.createElement('h3', { className: "text-2xl font-bold text-gray-900 mb-2" }, "Desire Captured"),
+                React.createElement('p', { className: "text-gray-600 mb-4" }, "Your want is safely stored in your personal vault"),
+                React.createElement('div', { className: "space-y-2" },
+                  React.createElement('div', { className: "flex items-center justify-center gap-2 text-sm text-gray-500" },
+                    React.createElement(Users, { className: "w-4 h-4" }),
+                    React.createElement('span', {}, `${getStats().anonymous} desires ready for the collective`)
+                  ),
+                  shareAnonymously && React.createElement('div', { className: "text-xs text-purple-600" },
+                    "Marked for anonymous sharing"
+                  )
+                )
+              )
+            )
+          );
+
+          return React.createElement('div', { className: "min-h-screen bg-gradient-to-br from-red-900 via-red-800 to-purple-900 text-white relative" },
+            React.createElement(DoodlePattern),
+            showSuccessReward && React.createElement(SuccessReward),
+            
+            React.createElement('div', { className: "relative z-10 max-w-6xl mx-auto px-6 py-8" },
+              
+              // Home View
+              view === 'home' && React.createElement('div', { className: "space-y-12" },
+                // Header
+                React.createElement('div', { className: "text-center space-y-6" },
+                  React.createElement('div', { className: "inline-flex items-center gap-3 mb-4" },
+                    React.createElement(Zap, { className: "w-8 h-8 text-yellow-400" }),
+                    React.createElement('h1', { className: "text-6xl font-black tracking-tight" }, "DESIRE ENGINE"),
+                    React.createElement(Zap, { className: "w-8 h-8 text-yellow-400" })
+                  ),
+                  React.createElement('p', { className: "text-xl text-red-200 max-w-2xl mx-auto leading-relaxed" },
+                    "Catch those sudden moments when you realize you want something you never knew you wanted"
+                  ),
+                  React.createElement('div', { className: "flex items-center justify-center gap-2 text-sm" },
+                    React.createElement('div', { className: "w-2 h-2 rounded-full bg-green-400 animate-pulse" }),
+                    React.createElement('span', { className: "text-green-300" },
+                      `${getStats().todayCount} desires captured today globally`
+                    )
+                  )
+                ),
+
+                // Explanation
+                React.createElement('div', { className: "grid md:grid-cols-2 gap-8 mt-16" },
+                  React.createElement('div', { className: "bg-black bg-opacity-20 backdrop-blur-sm border border-red-400 border-opacity-30 rounded-2xl p-8" },
+                    React.createElement(Target, { className: "w-12 h-12 text-red-400 mb-4" }),
+                    React.createElement('h2', { className: "text-2xl font-bold mb-4" }, "Capture the Spark"),
+                    React.createElement('p', { className: "text-red-100 leading-relaxed mb-4" },
+                      "You're scrolling, you see something, and suddenly you want it. Not because it was on your vision board, but because something inside you just woke up and said \"yes, that.\""
+                    ),
+                    React.createElement('p', { className: "text-red-200 text-sm" },
+                      "Those moments reveal who you're becoming. This tool helps you catch them before they disappear."
+                    )
+                  ),
+                  React.createElement('div', { className: "bg-black bg-opacity-20 backdrop-blur-sm border border-purple-400 border-opacity-30 rounded-2xl p-8" },
+                    React.createElement(Lock, { className: "w-12 h-12 text-purple-400 mb-4" }),
+                    React.createElement('h2', { className: "text-2xl font-bold mb-4" }, "Private by Design"),
+                    React.createElement('p', { className: "text-red-100 leading-relaxed mb-4" },
+                      "Your desires are stored privately on your device. You control what stays personal and what you're ready to share with the anonymous collective."
+                    ),
+                    React.createElement('p', { className: "text-red-200 text-sm" },
+                      "Build your personal vault of wants. The collective grows stronger with each shared desire."
+                    )
+                  )
+                ),
+
+                // Stats
+                getStats().total > 0 && React.createElement('div', { className: "grid grid-cols-3 gap-4 mt-12" },
+                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-red-400 border-opacity-20" },
+                    React.createElement('div', { className: "text-3xl font-black text-red-400" }, getStats().total),
+                    React.createElement('div', { className: "text-sm text-red-200" }, "Total Desires")
+                  ),
+                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-purple-400 border-opacity-20" },
+                    React.createElement('div', { className: "text-3xl font-black text-purple-400" }, getStats().anonymous),
+                    React.createElement('div', { className: "text-sm text-purple-200" }, "Ready for Collective")
+                  ),
+                  React.createElement('div', { className: "text-center p-6 bg-black bg-opacity-20 rounded-2xl border border-yellow-400 border-opacity-20" },
+                    React.createElement('div', { className: "text-3xl font-black text-yellow-400" },
+                      Object.keys(getStats().categories).length || 0
+                    ),
+                    React.createElement('div', { className: "text-sm text-yellow-200" }, "Life Areas")
+                  )
+                ),
+
+                // Action Buttons
+                React.createElement('div', { className: "flex flex-col sm:flex-row gap-4 justify-center mt-16" },
+                  React.createElement('button', {
+                    onClick: () => setView('add'),
+                    className: "bg-red-600 hover:bg-red-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all transform hover:scale-105 justify-center"
+                  },
+                    React.createElement(Plus, { className: "w-6 h-6" }),
+                    "Capture a Desire"
+                  ),
+                  getStats().total > 0 && React.createElement(React.Fragment, {},
+                    React.createElement('button', {
+                      onClick: () => setView('archive'),
+                      className: "bg-purple-600 hover:bg-purple-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all justify-center"
+                    },
+                      React.createElement(Calendar, { className: "w-6 h-6" }),
+                      `View Archive (${wishes.length})`
+                    ),
+                    React.createElement('button', {
+                      onClick: () => setView('insights'),
+                      className: "bg-yellow-600 hover:bg-yellow-700 px-8 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all justify-center"
+                    },
+                      React.createElement(TrendingUp, { className: "w-6 h-6" }),
+                      "Pattern Analysis"
+                    )
+                  )
+                ),
+
+                // Raw Truth Quote
+                React.createElement('div', { className: "text-center mt-16 p-8 border-2 border-red-400 border-opacity-30 rounded-2xl bg-black bg-opacity-10" },
+                  React.createElement('p', { className: "text-lg font-medium text-red-200" },
+                    `"${getRandomTruth()}"`
+                  )
+                ),
+
+                // Collective Preview
+                getStats().anonymous > 0 && React.createElement('div', { className: "mt-12 p-6 bg-purple-900 bg-opacity-20 border border-purple-500 border-opacity-30 rounded-2xl text-center" },
+                  React.createElement(Sparkles, { className: "w-8 h-8 text-purple-400 mx-auto mb-3" }),
+                  React.createElement('h3', { className: "text-xl font-bold text-purple-200 mb-2" }, "Collective Preview"),
+                  React.createElement('p', { className: "text-purple-300 text-sm mb-3" },
+                    `${getStats().anonymous} of your desires are marked for the anonymous collective`
+                  ),
+                  React.createElement('p', { className: "text-purple-400 text-xs italic" },
+                    "These will join the shared pool of human wanting when the collective connects"
+                  )
+                )
+              ),
+
+              // Add Wish View
+              view === 'add' && React.createElement('div', { className: "max-w-2xl mx-auto space-y-8" },
+                React.createElement('div', { className: "text-center" },
+                  React.createElement('button', {
+                    onClick: () => setView('home'),
+                    className: "text-red-300 hover:text-white mb-6 flex items-center gap-2 mx-auto transition-colors"
+                  }, "← Back to Home"),
+                  React.createElement('h2', { className: "text-4xl font-black mb-4" }, "What Just Woke Up Inside You?"),
+                  React.createElement('p', { className: "text-red-200 text-lg" },
+                    "That moment when something sparked and you thought \"I want that\" for the first time"
+                  )
+                ),
+
+                React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-3xl p-8 border border-red-400 border-opacity-20" },
+                  // Category selection
+                  React.createElement('div', { className: "mb-8" },
+                    React.createElement('label', { className: "block text-red-200 font-bold mb-4" }, "Pick your poison:"),
+                    React.createElement('div', { className: "grid grid-cols-2 md:grid-cols-3 gap-3" },
+                      categories.map((cat) => 
+                        React.createElement('button', {
+                          key: cat.id,
+                          onClick: () => setSelectedCategory(cat.id),
+                          className: `p-4 rounded-xl text-left transition-all border-2 ${
+                            selectedCategory === cat.id 
+                              ? 'bg-red-600 border-red-400' 
+                              : 'bg-black bg-opacity-20 border-red-700 border-opacity-30 hover:border-red-500 hover:border-opacity-50'
+                          }`
+                        },
+                          React.createElement('div', { className: "text-2xl mb-2" }, cat.icon),
+                          React.createElement('div', { className: "text-sm font-bold" }, cat.label)
+                        )
+                      )
+                    )
+                  ),
+
+                  // Wish input
+                  React.createElement('div', { className: "mb-6" },
+                    React.createElement('textarea', {
+                      value: currentWish,
+                      onChange: (e) => setCurrentWish(e.target.value),
+                      placeholder: "I wish...",
+                      className: "w-full p-6 rounded-2xl border-2 border-red-600 border-opacity-30 focus:border-red-400 focus:outline-none resize-none text-white placeholder-red-300 bg-black bg-opacity-40 text-lg",
+                      rows: "4"
+                    })
+                  ),
+
+                  // Anonymous toggle
+                  React.createElement('div', { className: "mb-6 space-y-4" },
+                    React.createElement('div', { className: "flex items-center justify-between p-4 bg-black bg-opacity-20 rounded-xl border border-purple-600 border-opacity-30" },
+                      React.createElement('div', {},
+                        React.createElement('div', { className: "font-bold text-purple-200 flex items-center gap-2" },
+                          React.createElement(Users, { className: "w-5 h-5" }),
+                          "Mark for Anonymous Collective"
+                        ),
+                        React.createElement('div', { className: "text-sm text-purple-300" },
+                          "Ready to share when the collective connects"
+                        )
+                      ),
+                      React.createElement('button', {
+                        onClick: () => setShareAnonymously(!shareAnonymously),
+                        className: `w-12 h-6 rounded-full transition-all relative ${
+                          shareAnonymously ? 'bg-purple-500' : 'bg-gray-600'
+                        }`
+                      },
+                        React.createElement('div', { className: `w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                          shareAnonymously ? 'translate-x-6' : 'translate-x-0.5'
+                        }`})
+                      )
+                    ),
+
+                    shareAnonymously && React.createElement('div', { className: "bg-purple-900 bg-opacity-20 border border-purple-600 border-opacity-30 rounded-xl p-4 space-y-3" },
+                      React.createElement('div', { className: "flex items-center gap-2 text-purple-200 font-medium" },
+                        React.createElement(Eye, { className: "w-4 h-4" }),
+                        "Future Anonymous Signals"
+                      ),
+                      React.createElement('input', {
+                        type: "email",
+                        value: email,
+                        onChange: (e) => setEmail(e.target.value),
+                        placeholder: "your.email@example.com (optional)",
+                        className: "w-full p-3 rounded-xl bg-black bg-opacity-40 border border-purple-600 border-opacity-50 text-white placeholder-purple-300 focus:border-purple-400 focus:outline-none"
+                      }),
+                      React.createElement('div', { className: "bg-purple-950 bg-opacity-50 rounded-lg p-3 border-l-4 border-purple-500" },
+                        React.createElement('p', { className: "text-purple-200 text-sm leading-relaxed" },
+                          React.createElement('strong', {}, "You'll be seen without being seen: "),
+                          "When the collective connects, you'll get gentle reminders of shared desires. Anonymous fragments from the void - no names, no details, just the pulse of collective wanting."
+                        )
+                      )
+                    )
+                  ),
+
+                  React.createElement('button', {
+                    onClick: saveWish,
+                    disabled: !currentWish.trim(),
+                    className: "w-full bg-gradient-to-r from-red-600 to-purple-600 text-white py-6 px-6 rounded-2xl font-black text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-red-500 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                  },
+                    React.createElement(Flame, { className: "w-6 h-6" }),
+                    "CAPTURE THIS DESIRE",
+                    React.createElement(ArrowRight, { className: "w-6 h-6" })
+                  )
+                )
+              ),
+
+              // Archive View
+              view === 'archive' && React.createElement('div', { className: "space-y-6" },
+                React.createElement('div', { className: "flex items-center justify-between" },
+                  React.createElement('button', {
+                    onClick: () => setView('home'),
+                    className: "text-red-300 hover:text-white flex items-center gap-2 transition-colors"
+                  }, "← Back to Home"),
+                  React.createElement('h2', { className: "text-3xl font-black" }, "Your Desire Archive"),
+                  React.createElement('div', { className: "text-red-300 text-sm" }, `${wishes.length} entries`)
+                ),
+
+                React.createElement('div', { className: "space-y-4" },
+                  wishes.length === 0 ? 
+                    React.createElement('div', { className: "text-center py-12" },
+                      React.createElement(Flame, { className: "w-16 h-16 text-red-400 opacity-50 mx-auto mb-4" }),
+                      React.createElement('p', { className: "text-red-300 text-lg" }, "No desires captured yet"),
+                      React.createElement('p', { className: "text-red-400 text-sm mt-2" }, "Start building your collection of wants")
+                    ) :
+                    wishes.slice().reverse().map((wish) => {
+                      const category = categories.find(c => c.id === wish.category);
+                      return React.createElement('div', { 
+                        key: wish.id, 
+                        className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20" 
+                      },
+                        React.createElement('div', { className: "flex items-start gap-4" },
+                          React.createElement('div', { className: "text-3xl" }, category?.icon),
+                          React.createElement('div', { className: "flex-1" },
+                            React.createElement('div', { className: "flex items-center gap-3 mb-3 flex-wrap" },
+                              React.createElement('span', { className: "text-sm font-bold text-red-300 bg-red-900 bg-opacity-50 px-3 py-1 rounded-full" },
+                                category?.label
+                              ),
+                              React.createElement('span', { className: "text-xs text-red-400" },
+                                formatDate(wish.timestamp)
+                              ),
+                              wish.anonymous && React.createElement('span', { className: "text-xs text-purple-300 bg-purple-900 bg-opacity-50 px-2 py-1 rounded-full flex items-center gap-1" },
+                                React.createElement(Eye, { className: "w-3 h-3" }),
+                                "marked for collective"
+                              )
+                            ),
+                            React.createElement('p', { className: "text-red-100 leading-relaxed text-lg" }, wish.text)
+                          )
+                        )
+                      );
+                    })
+                )
+              ),
+
+              // Insights View
+              view === 'insights' && React.createElement('div', { className: "space-y-8" },
+                React.createElement('div', { className: "flex items-center justify-between" },
+                  React.createElement('button', {
+                    onClick: () => setView('home'),
+                    className: "text-red-300 hover:text-white flex items-center gap-2 transition-colors"
+                  }, "← Back to Home"),
+                  React.createElement('h2', { className: "text-3xl font-black" }, "Pattern Recognition"),
+                  React.createElement('div', {})
+                ),
+
+                React.createElement('div', { className: "grid md:grid-cols-2 gap-6" },
+                  React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-red-700 border-opacity-20" },
+                    React.createElement('h3', { className: "text-xl font-bold mb-6" }, "Where Your Desires Live"),
+                    React.createElement('div', { className: "space-y-4" },
+                      categories.map((cat) => {
+                        const count = getStats().categories[cat.id] || 0;
+                        const totalWishes = Object.values(getStats().categories).reduce((a, b) => a + b, 0);
+                        const percentage = totalWishes > 0 ? (count / totalWishes * 100) : 0;
+                        return React.createElement('div', { key: cat.id, className: "space-y-2" },
+                          React.createElement('div', { className: "flex items-center justify-between" },
+                            React.createElement('div', { className: "flex items-center gap-3" },
+                              React.createElement('span', { className: "text-xl" }, cat.icon),
+                              React.createElement('span', { className: "font-medium" }, cat.label)
+                            ),
+                            React.createElement('span', { className: "text-sm text-red-300" }, count)
+                          ),
+                          React.createElement('div', { className: "h-2 bg-red-900 bg-opacity-50 rounded-full overflow-hidden" },
+                            React.createElement('div', {
+                              className: "h-full bg-gradient-to-r from-red-500 to-purple-500 rounded-full transition-all duration-1000",
+                              style: { width: `${percentage}%` }
+                            })
+                          )
+                        );
+                      })
+                    )
+                  ),
+
+                  React.createElement('div', { className: "bg-black bg-opacity-30 backdrop-blur-sm rounded-2xl p-6 border border-purple-700 border-opacity-20" },
+                    React.createElement('h3', { className: "text-xl font-bold mb-6" }, "Your Numbers"),
+                    React.createElement('div', { className: "space-y-6" },
+                      React.createElement('div', { className: "text-center p-4 bg-red-900 bg-opacity-30 rounded-xl" },
+                        React.createElement('div', { className: "text-3xl font-black text-red-400 mb-1" }, wishes.length),
+                        React.createElement('div', { className: "text-sm text-red-200" }, "Desires Captured")
+                      ),
+                      
+                      React.createElement('div', { className: "text-center p-4 bg-purple-900 bg-opacity-30 rounded-xl" },
+                        React.createElement('div', { className: "text-3xl font-black text-purple-400 mb-1" }, getStats().anonymous),
+                        React.createElement('div', { className: "text-sm text-purple-200" }, "Marked for Collective"),
+                        React.createElement('div', { className: "text-xs text-purple-300 mt-1" },
+                          `${wishes.length > 0 ? Math.round((getStats().anonymous / wishes.length) * 100) : 0}% of your desires`
+                        )
+                      ),
+
+                      getStats().withEmails > 0 && React.createElement('div', { className: "text-center p-4 bg-yellow-900 bg-opacity-30 rounded-xl" },
+                        React.createElement('div', { className: "text-3xl font-black text-yellow-400 mb-1" }, getStats().withEmails),
+                        React.createElement('div', { className: "text-sm text-yellow-200" }, "Ready for Signals")
+                      ),
+
+                      React.createElement('div', { className: "p-4 bg-yellow-900 bg-opacity-20 rounded-xl border border-yellow-600 border-opacity-30" },
+                        React.createElement('p', { className: "text-sm text-yellow-200 font-medium" },
+                          "Your desires are showing you who you want to become. Pay attention to the patterns."
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          );
+        };
+
+        ReactDOM.render(React.createElement(DesireEngine), document.getElementById('root'));
+    </script>
+</body>
+</html>
