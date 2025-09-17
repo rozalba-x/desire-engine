@@ -333,18 +333,20 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         .success-overlay {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            cursor: pointer;
+            z-index: 9999;
         }
 
         .success-modal {
@@ -355,13 +357,7 @@
             max-width: 400px;
             margin: 1rem;
             text-align: center;
-            animation: scaleIn 0.4s ease-out;
-            cursor: default;
-        }
-
-        @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            position: relative;
         }
 
         .success-icon {
@@ -386,10 +382,19 @@
             cursor: pointer;
             font-weight: bold;
             transition: background 0.3s;
+            margin-right: 0.5rem;
         }
 
         .success-btn:hover {
             background: #ef4444;
+        }
+
+        .success-btn-skip {
+            background: #6b7280;
+        }
+
+        .success-btn-skip:hover {
+            background: #9ca3af;
         }
 
         .wish-item {
@@ -529,7 +534,7 @@
 
         <!-- ADD WISH VIEW -->
         <div id="add-view" class="hidden">
-            <a href="#" class="back-btn" onclick="showHomeView()">← Back to Home</a>
+            <a href="#" class="back-btn" onclick="showHomeView(); return false;">← Back to Home</a>
             
             <div class="form-container">
                 <h2 class="form-title">What Just Woke Up Inside You?</h2>
@@ -590,21 +595,20 @@
 
         <!-- ARCHIVE VIEW -->
         <div id="archive-view" class="hidden">
-            <a href="#" class="back-btn" onclick="showHomeView()">← Back to Home</a>
+            <a href="#" class="back-btn" onclick="showHomeView(); return false;">← Back to Home</a>
             <h2 class="form-title">Your Desire Archive</h2>
             <div id="wishes-list"></div>
         </div>
+    </div>
 
-        <!-- SUCCESS MODAL - FIXED VERSION -->
-        <div id="success-modal" class="success-overlay hidden" onclick="closeSuccessModal()">
-            <div class="success-modal" onclick="event.stopPropagation()">
-                <div class="success-icon">🔥</div>
-                <h3 class="success-title">Desire Captured</h3>
-                <p>Your want is safely stored in your personal vault</p>
-                <button class="success-btn" onclick="closeSuccessModal()">
-                    Continue to Archive
-                </button>
-            </div>
+    <!-- SUCCESS MODAL - BULLETPROOF VERSION -->
+    <div id="success-modal" class="success-overlay hidden">
+        <div class="success-modal">
+            <div class="success-icon">🔥</div>
+            <h3 class="success-title">Desire Captured</h3>
+            <p>Your want is safely stored in your personal vault</p>
+            <button class="success-btn" onclick="hideModal()">Continue to Archive</button>
+            <button class="success-btn success-btn-skip" onclick="hideModal()">Close</button>
         </div>
     </div>
 
@@ -631,22 +635,45 @@
             "Every desire is a compass pointing toward your unlived life"
         ];
 
+        // BULLETPROOF modal hide function
+        function hideModal() {
+            const modal = document.getElementById('success-modal');
+            if (modal) {
+                modal.className = 'success-overlay hidden';
+                modal.style.display = 'none';
+            }
+            showArchiveView();
+        }
+
+        // Alternative force hide
+        function forceHideModal() {
+            const modal = document.getElementById('success-modal');
+            if (modal) {
+                modal.remove();
+            }
+            showArchiveView();
+        }
+
         // Load wishes from localStorage
         function loadWishes() {
-            const saved = localStorage.getItem('desire-engine-wishes');
-            if (saved) {
-                try {
+            try {
+                const saved = localStorage.getItem('desire-engine-wishes');
+                if (saved) {
                     wishes = JSON.parse(saved);
-                } catch (e) {
-                    wishes = [];
                 }
+            } catch (e) {
+                wishes = [];
             }
             updateStats();
         }
 
         // Save wishes to localStorage
         function saveWishesToStorage() {
-            localStorage.setItem('desire-engine-wishes', JSON.stringify(wishes));
+            try {
+                localStorage.setItem('desire-engine-wishes', JSON.stringify(wishes));
+            } catch (e) {
+                console.log('Could not save to localStorage');
+            }
         }
 
         // Update stats display
@@ -656,21 +683,27 @@
             const categoriesCount = new Set(wishes.map(w => w.category)).size;
 
             if (totalCount > 0) {
-                document.getElementById('stats-container').style.display = 'grid';
-                document.getElementById('archive-btn').style.display = 'flex';
-                document.getElementById('insights-btn').style.display = 'flex';
+                const statsContainer = document.getElementById('stats-container');
+                if (statsContainer) statsContainer.style.display = 'grid';
                 
-                document.getElementById('total-count').textContent = Math.max(totalCount, 1247);
-                document.getElementById('anonymous-count').textContent = Math.max(anonymousCount, 923);
-                document.getElementById('categories-count').textContent = categoriesCount;
-                document.getElementById('archive-count').textContent = totalCount;
+                const archiveBtn = document.getElementById('archive-btn');
+                if (archiveBtn) archiveBtn.style.display = 'flex';
+                
+                const insightsBtn = document.getElementById('insights-btn');
+                if (insightsBtn) insightsBtn.style.display = 'flex';
+                
+                const totalEl = document.getElementById('total-count');
+                if (totalEl) totalEl.textContent = Math.max(totalCount, 1247);
+                
+                const anonymousEl = document.getElementById('anonymous-count');
+                if (anonymousEl) anonymousEl.textContent = Math.max(anonymousCount, 923);
+                
+                const categoriesEl = document.getElementById('categories-count');
+                if (categoriesEl) categoriesEl.textContent = categoriesCount;
+                
+                const archiveCountEl = document.getElementById('archive-count');
+                if (archiveCountEl) archiveCountEl.textContent = totalCount;
             }
-        }
-
-        // Close success modal
-        function closeSuccessModal() {
-            document.getElementById('success-modal').classList.add('hidden');
-            showArchiveView();
         }
 
         // Show different views
@@ -679,9 +712,9 @@
             document.getElementById('add-view').classList.add('hidden');
             document.getElementById('archive-view').classList.add('hidden');
             
-            // Random quote
             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-            document.getElementById('random-quote').textContent = `"${randomQuote}"`;
+            const quoteEl = document.getElementById('random-quote');
+            if (quoteEl) quoteEl.textContent = `"${randomQuote}"`;
         }
 
         function showAddView() {
@@ -694,12 +727,10 @@
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('add-view').classList.add('hidden');
             document.getElementById('archive-view').classList.remove('hidden');
-            
             displayWishes();
         }
 
         function showInsightsView() {
-            // For now, just show archive - could expand later
             showArchiveView();
         }
 
@@ -707,11 +738,12 @@
         function selectCategory(category) {
             selectedCategory = category;
             
-            // Update UI
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+            
+            const selectedBtn = document.querySelector(`[data-category="${category}"]`);
+            if (selectedBtn) selectedBtn.classList.add('active');
         }
 
         // Toggle anonymous sharing
@@ -719,16 +751,19 @@
             shareAnonymously = !shareAnonymously;
             const toggle = document.getElementById('anonymous-toggle');
             
-            if (shareAnonymously) {
-                toggle.classList.add('active');
-            } else {
-                toggle.classList.remove('active');
+            if (toggle) {
+                if (shareAnonymously) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
             }
         }
 
         // Save a new wish
         function saveWish() {
-            const wishText = document.getElementById('wish-text').value.trim();
+            const wishInput = document.getElementById('wish-text');
+            const wishText = wishInput ? wishInput.value.trim() : '';
             
             if (!wishText) {
                 alert('Please enter your wish first!');
@@ -748,20 +783,23 @@
             updateStats();
 
             // Clear form
-            document.getElementById('wish-text').value = '';
+            if (wishInput) wishInput.value = '';
             
             // Show success modal
-            document.getElementById('success-modal').classList.remove('hidden');
+            const modal = document.getElementById('success-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            }
             
-            // Auto-hide modal after 4 seconds (longer time)
-            setTimeout(() => {
-                closeSuccessModal();
-            }, 4000);
+            // Auto-hide after 3 seconds
+            setTimeout(hideModal, 3000);
         }
 
         // Display wishes in archive
         function displayWishes() {
             const container = document.getElementById('wishes-list');
+            if (!container) return;
             
             if (wishes.length === 0) {
                 container.innerHTML = `
@@ -799,10 +837,16 @@
             }).join('');
         }
 
-        // Handle escape key to close modal
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeSuccessModal();
+        // Event listeners
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideModal();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'success-modal') {
+                hideModal();
             }
         });
 
@@ -811,11 +855,23 @@
             loadWishes();
             showHomeView();
             
-            // Update today count with some randomness
             const hour = new Date().getHours();
             const todayCount = 12 + Math.floor(hour / 3) + Math.floor(Math.random() * 3);
-            document.getElementById('today-count').textContent = todayCount;
+            const todayEl = document.getElementById('today-count');
+            if (todayEl) todayEl.textContent = todayCount;
+
+            // Safety: hide any visible modals on load
+            setTimeout(() => {
+                const modal = document.getElementById('success-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    hideModal();
+                }
+            }, 100);
         });
+
+        // Make functions globally available for console debugging
+        window.hideModal = hideModal;
+        window.forceHideModal = forceHideModal;
     </script>
 </body>
 </html>
